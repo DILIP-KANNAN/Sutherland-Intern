@@ -1,0 +1,7 @@
+domain: "insurance"
+data:
+  raw_path: "data/processed/synthetic_calls.json"
+  processed_path: "data/processed/labelled_corpus.jsonl"
+metadata:
+  outcome_labels: ["won", "lost", "no-decision"]
+  speaker_labels: ["Agent", "Customer"]

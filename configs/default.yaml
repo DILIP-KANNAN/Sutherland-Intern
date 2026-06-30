@@ -1,0 +1,8 @@
+pipeline:
+  embedding_model: "all-MiniLM-L6-v2"
+  clustering:
+    algorithm: "kmeans"
+    n_clusters: 6
+    random_state: 42
+  topics:
+    min_topic_size: 5

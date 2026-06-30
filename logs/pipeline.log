@@ -1,0 +1,12 @@
+{"timestamp": "2026-06-30T15:50:46.669977Z", "level": "INFO", "message": "Initializing Conversation Pattern Miner pipeline...", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-06-30T15:50:46.674362Z", "level": "INFO", "message": "Loaded config from configs/insurance.yaml for domain: insurance", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-06-30T15:50:46.674537Z", "level": "INFO", "message": "--- Executing Phase 1: Ingestion, Validation, and Profiling ---", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-06-30T15:50:46.674635Z", "level": "INFO", "message": "Loading raw dataset from data/processed/synthetic_calls.json", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-06-30T15:50:46.685120Z", "level": "INFO", "message": "Loaded 384 raw records.", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-06-30T15:50:46.691710Z", "level": "INFO", "message": "Dataset validation summary: 384 valid, 0 invalid records.", "module": "validator", "function": "validate_dataset"}
+{"timestamp": "2026-06-30T15:50:46.691882Z", "level": "INFO", "message": "Saving validated dataset to data/processed/labelled_corpus.jsonl", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-06-30T15:50:46.704490Z", "level": "INFO", "message": "Successfully saved 384 records to data/processed/labelled_corpus.jsonl", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-06-30T15:50:46.719611Z", "level": "INFO", "message": "Running profile analysis on 384 records...", "module": "profiler", "function": "profile_dataset"}
+{"timestamp": "2026-06-30T15:50:46.727549Z", "level": "INFO", "message": "Saved dataset profile JSON to outputs/profiler\\dataset_profile.json", "module": "profiler", "function": "profile_dataset"}
+{"timestamp": "2026-06-30T15:50:47.611570Z", "level": "INFO", "message": "Saved EDA visualization plots successfully.", "module": "profiler", "function": "profile_dataset"}
+{"timestamp": "2026-06-30T15:50:47.612292Z", "level": "INFO", "message": "Phase 1 completed successfully. Profile generated in outputs/profiler", "module": "run_pipeline", "function": "main"}
