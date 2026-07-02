@@ -10,3 +10,28 @@
 {"timestamp": "2026-06-30T15:50:46.727549Z", "level": "INFO", "message": "Saved dataset profile JSON to outputs/profiler\\dataset_profile.json", "module": "profiler", "function": "profile_dataset"}
 {"timestamp": "2026-06-30T15:50:47.611570Z", "level": "INFO", "message": "Saved EDA visualization plots successfully.", "module": "profiler", "function": "profile_dataset"}
 {"timestamp": "2026-06-30T15:50:47.612292Z", "level": "INFO", "message": "Phase 1 completed successfully. Profile generated in outputs/profiler", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-02T11:54:00.509193Z", "level": "INFO", "message": "Initializing Conversation Pattern Miner pipeline...", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-02T11:54:00.519670Z", "level": "INFO", "message": "Loaded config from configs/insurance.yaml for domain: insurance", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-02T11:54:00.519842Z", "level": "INFO", "message": "--- Executing Phase 1: Ingestion, Validation, and Profiling ---", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-02T11:54:00.519956Z", "level": "INFO", "message": "Loading raw dataset from data/processed/synthetic_calls.json", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-02T11:54:00.546747Z", "level": "INFO", "message": "Loaded 384 raw records.", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-02T11:54:00.554594Z", "level": "INFO", "message": "Dataset validation summary: 384 valid, 0 invalid records.", "module": "validator", "function": "validate_dataset"}
+{"timestamp": "2026-07-02T11:54:00.554795Z", "level": "INFO", "message": "Saving validated dataset to data/processed/labelled_corpus.jsonl", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-02T11:54:00.571825Z", "level": "INFO", "message": "Successfully saved 384 records to data/processed/labelled_corpus.jsonl", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-02T11:54:00.586358Z", "level": "INFO", "message": "Running profile analysis on 384 records...", "module": "profiler", "function": "profile_dataset"}
+{"timestamp": "2026-07-02T11:54:00.594483Z", "level": "INFO", "message": "Saved dataset profile JSON to outputs/profiler\\dataset_profile.json", "module": "profiler", "function": "profile_dataset"}
+{"timestamp": "2026-07-02T11:54:01.507585Z", "level": "INFO", "message": "Saved EDA visualization plots successfully.", "module": "profiler", "function": "profile_dataset"}
+{"timestamp": "2026-07-02T11:54:01.508901Z", "level": "INFO", "message": "Phase 1 completed successfully. Profile generated in outputs/profiler", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-02T11:54:01.509070Z", "level": "INFO", "message": "--- Executing Phase 2: Embeddings, Features, and Topics ---", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-02T11:54:15.502950Z", "level": "INFO", "message": "Loading sentence-transformer model: all-MiniLM-L6-v2", "module": "embedder", "function": "__init__"}
+{"timestamp": "2026-07-02T11:54:21.067573Z", "level": "INFO", "message": "Generating semantic embeddings for 384 calls...", "module": "embedder", "function": "generate_embeddings"}
+{"timestamp": "2026-07-02T11:54:26.511113Z", "level": "INFO", "message": "Successfully exported call embeddings of shape (384, 384) to outputs/embeddings/call_embeddings.npy", "module": "embedder", "function": "generate_embeddings"}
+{"timestamp": "2026-07-02T11:54:26.511298Z", "level": "INFO", "message": "Call embeddings step complete. Shape: (384, 384)", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-02T11:54:26.514718Z", "level": "INFO", "message": "Extracting features for 384 calls...", "module": "extractor", "function": "extract_features"}
+{"timestamp": "2026-07-02T11:54:26.541375Z", "level": "INFO", "message": "Saved feature DataFrame of shape (384, 18) to outputs/features/call_features.csv", "module": "extractor", "function": "extract_features"}
+{"timestamp": "2026-07-02T11:54:26.541806Z", "level": "INFO", "message": "Conversational features step complete. Shape: (384, 18)", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-02T11:54:40.846560Z", "level": "INFO", "message": "Initializing BERTopic model with min_topic_size=5, nr_topics=8", "module": "topic_model", "function": "__init__"}
+{"timestamp": "2026-07-02T11:54:40.847044Z", "level": "INFO", "message": "Fitting and transforming call documents through BERTopic pipeline...", "module": "topic_model", "function": "fit_transform"}
+{"timestamp": "2026-07-02T11:54:56.720839Z", "level": "INFO", "message": "Topic assignments saved successfully to outputs/topics\\topic_assignments.json", "module": "topic_model", "function": "save_model"}
+{"timestamp": "2026-07-02T11:54:56.721057Z", "level": "INFO", "message": "Topic modeling step complete. Assigned 384 calls to 8 topics.", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-02T11:54:56.721180Z", "level": "INFO", "message": "Phase 2 execution finished successfully.", "module": "run_pipeline", "function": "main"}
