@@ -18,10 +18,12 @@ Our tests verify each component of the pipeline:
 3. **`test_profiler.py`**: Asserts that profile summary statistics are computed correctly and checks that PDF/EDA visualization images are exported.
 4. **`test_features.py`**: Feeds transcripts containing specific turn structures and validates that text features (like question marks and consecutive speaker monologues) are calculated accurately.
 5. **`test_topics.py`**: Fits a lightweight `BERTopic` wrapper on a mock corpus and confirms that topic definitions are successfully exported to a JSON dictionary.
+6. **`test_clusters.py`**: Validates the KMeans cluster assignment vectors shape and group distribution boundaries.
+7. **`test_analytics.py`**: Verifies the mathematical calculation of the Cohen's d effect size function against expected statistical values.
 
 ---
 
-## 2. Core NLP Methodologies
+## 2. Core NLP & Analytics Methodologies
 
 ```mermaid
 graph TD
@@ -29,8 +31,9 @@ graph TD
     B -->|Stylometry Features| C[pandas DataFrame]
     A -->|Transformer Encoder| D[all-MiniLM-L6-v2 Embeddings]
     D -->|UMAP Reduction| E[Manifold Projection]
-    E -->|HDBSCAN Clustering| F[Density Groups]
-    F -->|Class-based TF-IDF| G[8 Semantic Topics]
+    E -->|HDBSCAN Clustering| F[8 Semantic Topics]
+    D -->|KMeans Clustering| H[6 Call Clusters]
+    C -->|Correlation & Cohen's d| I[Statistical Analytics Reports]
 ```
 
 ### Ingestion Schema Validation
@@ -60,3 +63,15 @@ graph TD
   - **HDBSCAN (Hierarchical Density-Based Spatial Clustering)**: Automatically discovers semantic clusters in the projection space, filtering noise into Topic `-1`.
   - **c-TF-IDF (Class-based TF-IDF)**: Extracts the top words that uniquely describe each topic by treating all calls in a topic as a single document.
   - **Topic Reduction**: Semantically groups topics together until exactly **8 topics** remain.
+
+### KMeans Clustering
+- **Methodology**: **Unsupervised Profile Partitioning**.
+- Projects the 384-dimensional call embeddings into exactly **6 distinct call clusters** using Euclidean distance. This groups calls with similar conversational styles and semantics together, allowing us to isolate clusters with extremely high win rates (e.g. Cluster 3) or loss rates (e.g. Cluster 4).
+
+### Statistical Correlations & Effect Size (Cohen's d)
+- **Methodology**: **Outcome Association & Predictive Modeling**.
+- Rather than assuming what makes a call successful, we run statistical calculations to verify predictors:
+  - **Pearson Correlation ($r$)**: Measures the linear relationship strength and direction between conversational features and binary outcomes (`won` mapped to 1, `lost` mapped to 0).
+  - **Cohen's d Effect Size**: Quantifies the standardized mean difference of numeric variables between `won` and `lost` calls:
+    $$d = \frac{\bar{x}_{\text{won}} - \bar{x}_{\text{lost}}}{s_{\text{pooled}}}$$
+    This isolates features with large separation power (e.g., $d > 0.8$) representing key conversational behaviors.
