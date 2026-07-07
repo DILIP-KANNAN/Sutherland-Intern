@@ -16,10 +16,9 @@ st.set_page_config(
 # Custom styles for high-fidelity aesthetics
 st.markdown("""
 <style>
-    /* Hide Streamlit header (deploy button), footer, and default menu */
-    header {visibility: hidden; height: 0px !important;}
+    /* Hide specifically the Deploy button and footer while preserving the header for sidebar toggle */
+    div[data-testid="stDeployButton"] {display: none !important;}
     footer {visibility: hidden;}
-    #MainMenu {visibility: hidden;}
 
     /* Metric Card styling: dynamic secondary background with subtle contrast borders */
     .metric-card {
