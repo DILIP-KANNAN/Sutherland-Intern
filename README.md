@@ -36,11 +36,43 @@ conversation_pattern_miner/
 └── requirements.txt       # Python package dependencies
 ```
 
-## Running the Pipeline
-To run the pipeline up to Phase 3 (Clustering, Analytics, and Visualizations):
-```bash
-python run_pipeline.py --config configs/insurance.yaml --phase 3
-```
+## Running the Pipeline Phases
+
+The framework execution is split into three modular, sequential phases. You can execute any phase directly using the `--phase` argument:
+
+### Phase 1 — Ingestion, Validation & Profiling
+* **Description**: Ingests raw conversational data, validates it against strict schemas, checks values against domain configuration labels, and performs exploratory data profiling (calculating demographics, objection splits, and plotting initial distributions).
+* **Command**:
+  ```bash
+  python run_pipeline.py --config configs/insurance.yaml --phase 1
+  ```
+* **Key Outputs**:
+  - Validated corpus: `data/processed/labelled_corpus.jsonl`
+  - Profile statistics: `outputs/profiler/dataset_profile.json`
+  - Plots: `outputs/profiler/outcome_distribution.png`, `talk_ratio_distribution.png`
+
+### Phase 2 — Core NLP (Embeddings, Features & Topics)
+* **Description**: Segment and parse clean dialogue turns. Generates 384-dimensional dense semantic call embeddings using the transformer backend and extracts 16 conversational and style features (like monologues, sentiment, question counts). Performs unsupervised topic modeling using BERTopic to map the calls into 8 core topic representations.
+* **Command**:
+  ```bash
+  python run_pipeline.py --config configs/insurance.yaml --phase 2
+  ```
+* **Key Outputs**:
+  - Embeddings matrix: `outputs/embeddings/call_embeddings.npy` (shape 384x384)
+  - Features DataFrame: `outputs/features/call_features.csv` (shape 384x18)
+  - Topic definitions & assignments: `outputs/topics/topic_assignments.json`
+
+### Phase 3 — Clustering & Outcome Analysis
+* **Description**: Groups call vector representations into 6 clusters using KMeans. Runs outcome correlation metrics (Pearson coefficients) and Cohen's d effect size calculations between conversion states (Won vs. Lost). Generates static outcome boxplots and an interactive 2D UMAP scatter map.
+* **Command**:
+  ```bash
+  python run_pipeline.py --config configs/insurance.yaml --phase 3
+  ```
+* **Key Outputs**:
+  - Cluster IDs: `outputs/clusters/cluster_assignments.json`
+  - Analytics CSVs: `outputs/analytics/cohens_d_analysis.csv`, `feature_correlations.csv`
+  - UMAP Scatter Map: `outputs/visualizations/umap_plot.html` (interactive HTML)
+
 
 ## Running Tests
 To verify the implementation using the test suite:

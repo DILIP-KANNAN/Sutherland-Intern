@@ -75,3 +75,49 @@ graph TD
   - **Cohen's d Effect Size**: Quantifies the standardized mean difference of numeric variables between `won` and `lost` calls:
     $$d = \frac{\bar{x}_{\text{won}} - \bar{x}_{\text{lost}}}{s_{\text{pooled}}}$$
     This isolates features with large separation power (e.g., $d > 0.8$) representing key conversational behaviors.
+
+---
+
+## 3. Pipeline Execution Pathway
+
+The pipeline orchestration is decoupled into three logical execution phases. The main entry point (`run_pipeline.py`) coordinates imports and resource allocations dynamically based on the `--phase` argument.
+
+### Phase 1 — Ingestion, Validation & Profiling
+- **Pipeline Argument**: `--phase 1`
+- **Execution Command**:
+  ```bash
+  python run_pipeline.py --config configs/insurance.yaml --phase 1
+  ```
+- **Execution Flow**:
+  1. **Config Ingestion**: Loads and merges parameters from the default settings and the domain specific YAML files.
+  2. **Data Parsing**: Checks file extensions and streams raw list or JSONL records into memory.
+  3. **Pydantic Validation**: Validates fields against strict schemas, recording error counts for corrupted structures.
+  4. **Statistical Profiling**: Calculates dataset baseline statistics and exports outcome and talk ratio distributions.
+- **Architectural Design**: Designed to be fast and memory-efficient by omitting NLP/machine-learning dependencies during basic ingestion and syntax verification.
+
+### Phase 2 — Core NLP (Embeddings, Features & Topics)
+- **Pipeline Argument**: `--phase 2`
+- **Execution Command**:
+  ```bash
+  python run_pipeline.py --config configs/insurance.yaml --phase 2
+  ```
+- **Execution Flow**:
+  1. **Turn Parsing**: Regular expressions segment dialogue summaries into structured turn objects containing speaker details.
+  2. **Semantic Embedding**: Maps transcripts to 384-dimensional dense vectors using a SentenceTransformer. Employs directory caching to bypass redundant computations.
+  3. **Feature Extraction**: Tabulates 16 behavioral features measuring dialogue structure, Tenures, Premiums, and Monologue behaviors.
+  4. **Topic Discovery**: Fits a BERTopic model combining UMAP projection, HDBSCAN clustering, and class-based TF-IDF keyword weights to segment summaries into 8 semantic topics.
+- **Architectural Design**: Heavy NLP-based phase. Utilizes dynamic module loading to delay loading heavy weight models (SentenceTransformer and BERTopic) until executing this stage.
+
+### Phase 3 — Clustering & Outcome Analysis
+- **Pipeline Argument**: `--phase 3`
+- **Execution Command**:
+  ```bash
+  python run_pipeline.py --config configs/insurance.yaml --phase 3
+  ```
+- **Execution Flow**:
+  1. **KMeans Clustering**: Clusters calls into exactly 6 clusters using Euclidean distance.
+  2. **Correlation Calculation**: Groups features by binary outcomes and evaluates Pearson correlation coefficients.
+  3. **Effect Size (Cohen's d)**: Calculates mean differences divided by pooled standard deviations to identify key conversion signals.
+  4. **Dimensionality Reduction Plotting**: Reduces embedding representations to 2D UMAP space and renders an interactive HTML Plotly map.
+- **Architectural Design**: Combines unsupervised vector clusters with traditional statistical comparisons to establish outcome-predictive profiles.
+
