@@ -129,3 +129,63 @@ def generate_visualizations(
             plt.close()
             
     logger.info("Successfully exported all visualizations.")
+
+def generate_cluster_specific_plots(features_df: pd.DataFrame, clusters: List[int], output_dir: str):
+    """
+    For each cluster 0-5, exports a 2x2 multi-panel plot comparing conversational 
+    features split by outcome (won, lost, no-decision).
+    """
+    df = features_df.copy()
+    df["cluster_id"] = clusters
+    
+    unique_clusters = sorted(df["cluster_id"].unique())
+    features_to_plot = [
+        ("talk_ratio", "Agent Talk Ratio"),
+        ("max_monologue_turns", "Max Monologue Turns"),
+        ("customer_sentiment", "Customer Sentiment"),
+        ("num_objections", "Number of Objections")
+    ]
+    
+    color_map = {'won': '#BBDEFB', 'lost': '#FFCDD2', 'no-decision': '#FFE0B2'}
+    border_map = {'won': '#1976D2', 'lost': '#D32F2F', 'no-decision': '#F57C00'}
+    
+    for c_id in unique_clusters:
+        c_group = df[df["cluster_id"] == c_id]
+        
+        fig, axes = plt.subplots(2, 2, figsize=(10, 8))
+        fig.suptitle(f"Cluster {c_id} Conversational Profile by Outcome", fontsize=14, fontweight='bold')
+        
+        # Check outcomes present in cluster
+        outcomes_present = [o for o in ['won', 'lost', 'no-decision'] if o in c_group['outcome'].values]
+        
+        for idx, (col, title) in enumerate(features_to_plot):
+            ax = axes[idx // 2, idx % 2]
+            
+            if col in c_group.columns and len(outcomes_present) > 0:
+                # Prepare boxplot data grouped by outcome
+                box_data = [c_group[c_group["outcome"] == o][col].values for o in outcomes_present]
+                
+                # Plot boxplot
+                bp = ax.boxplot(box_data, tick_labels=outcomes_present, patch_artist=True)
+                
+                # Color code
+                for patch, outcome in zip(bp['boxes'], outcomes_present):
+                    patch.set(
+                        facecolor=color_map.get(outcome, '#E0E0E0'), 
+                        color=border_map.get(outcome, '#757575'), 
+                        linewidth=1.5
+                    )
+                for median in bp['medians']:
+                    median.set(color='black', linewidth=1.5)
+            else:
+                ax.text(0.5, 0.5, "Data Unavailable", ha='center', va='center')
+                
+            ax.set_title(title, fontsize=11, fontweight='semibold')
+            ax.grid(axis='y', linestyle='--', alpha=0.5)
+            
+        plt.tight_layout()
+        png_path = os.path.join(output_dir, f"cluster_{c_id}_profile.png")
+        plt.savefig(png_path, dpi=150)
+        plt.close()
+        logger.info(f"Multi-panel plot saved for Cluster {c_id} to {png_path}")
+

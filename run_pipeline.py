@@ -210,24 +210,35 @@ def main():
             return
             
         # 2. Outcome Analysis
-        from src.analytics.outcome_analysis import perform_outcome_analysis
+        from src.analytics.outcome_analysis import (
+            perform_outcome_analysis,
+            generate_detailed_cluster_profiles,
+            export_decoupled_outcome_stats
+        )
         analytics_dir = "outputs/analytics"
         try:
             perform_outcome_analysis(features_df, topics, list(clusters), analytics_dir)
+            generate_detailed_cluster_profiles(features_df, topics, list(clusters), analytics_dir)
+            export_decoupled_outcome_stats(features_df, analytics_dir)
             logger.info(f"Outcome correlation analysis complete. Reports saved in {analytics_dir}")
         except Exception as e:
             logger.error(f"Error performing outcome analysis: {e}")
             return
             
         # 3. Visualizations
-        from src.visualization.visualizer import generate_visualizations
+        from src.visualization.visualizer import (
+            generate_visualizations,
+            generate_cluster_specific_plots
+        )
         visualizations_dir = "outputs/visualizations"
         try:
             generate_visualizations(embeddings, features_df, list(clusters), visualizations_dir)
+            generate_cluster_specific_plots(features_df, list(clusters), visualizations_dir)
             logger.info(f"Visualization plots generated successfully in {visualizations_dir}")
         except Exception as e:
             logger.error(f"Error generating visual plots: {e}")
             return
+
             
         # 4. Dual-Method Segment Labeling
         from src.topics.labeler import generate_and_save_labels

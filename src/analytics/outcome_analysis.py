@@ -132,3 +132,102 @@ def perform_outcome_analysis(
     cluster_df.to_csv(os.path.join(output_dir, "cluster_outcome_analysis.csv"), index=False)
     
     logger.info("Statistical reports generated and exported successfully.")
+
+def generate_detailed_cluster_profiles(
+    features_df: pd.DataFrame, 
+    topics: List[int], 
+    clusters: List[int], 
+    output_dir: str
+):
+    """
+    Computes detailed summary metrics (mean, median, standard deviation) for key
+    conversational features grouped by cluster and outcome, saved as nested JSON.
+    """
+    import json
+    df = features_df.copy()
+    df["topic_id"] = topics
+    df["cluster_id"] = clusters
+    
+    key_features = [
+        "talk_ratio", "num_turns", "call_duration_seconds", "customer_sentiment",
+        "resolution_score", "num_objections", "discount_offered_pct", 
+        "max_monologue_turns", "avg_turn_length"
+    ]
+    
+    # Check what features exist
+    features_to_calc = [f for f in key_features if f in df.columns]
+    
+    profiles = {}
+    
+    unique_clusters = sorted(df["cluster_id"].unique())
+    unique_outcomes = ["won", "lost", "no-decision"]
+    
+    for c_id in unique_clusters:
+        c_str = f"cluster_{c_id}"
+        profiles[c_str] = {}
+        c_group = df[df["cluster_id"] == c_id]
+        
+        for outcome in unique_outcomes:
+            o_group = c_group[c_group["outcome"] == outcome]
+            count = len(o_group)
+            
+            profiles[c_str][outcome] = {
+                "total_calls": count,
+                "metrics": {}
+            }
+            
+            if count > 0:
+                for col in features_to_calc:
+                    mean_val = o_group[col].mean()
+                    med_val = o_group[col].median()
+                    std_val = o_group[col].std() if count > 1 else 0.0
+                    
+                    profiles[c_str][outcome]["metrics"][col] = {
+                        "mean": round(float(mean_val), 4) if not pd.isna(mean_val) else 0.0,
+                        "median": round(float(med_val), 4) if not pd.isna(med_val) else 0.0,
+                        "std": round(float(std_val), 4) if not pd.isna(std_val) else 0.0
+                    }
+                    
+    json_path = os.path.join(output_dir, "cluster_outcome_profiles.json")
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(profiles, f, indent=2)
+    logger.info(f"Detailed cluster outcome profiles exported to {json_path}")
+
+def export_decoupled_outcome_stats(features_df: pd.DataFrame, output_dir: str):
+    """
+    Filters and exports separate summary CSVs for each outcome type (won, lost, no-decision).
+    """
+    df = features_df.copy()
+    unique_outcomes = ["won", "lost", "no-decision"]
+    
+    numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+    numeric_cols = [c for c in numeric_cols if c not in ["call_id"]]
+    
+    for outcome in unique_outcomes:
+        o_group = df[df["outcome"] == outcome]
+        summary_rows = []
+        
+        for col in numeric_cols:
+            if len(o_group) > 0:
+                mean_val = o_group[col].mean()
+                median_val = o_group[col].median()
+                std_val = o_group[col].std() if len(o_group) > 1 else 0.0
+                min_val = o_group[col].min()
+                max_val = o_group[col].max()
+            else:
+                mean_val = median_val = std_val = min_val = max_val = 0.0
+                
+            summary_rows.append({
+                "feature": col,
+                "mean": round(float(mean_val), 4) if not pd.isna(mean_val) else 0.0,
+                "median": round(float(median_val), 4) if not pd.isna(median_val) else 0.0,
+                "std": round(float(std_val), 4) if not pd.isna(std_val) else 0.0,
+                "min": round(float(min_val), 4) if not pd.isna(min_val) else 0.0,
+                "max": round(float(max_val), 4) if not pd.isna(max_val) else 0.0
+            })
+            
+        summary_df = pd.DataFrame(summary_rows)
+        csv_path = os.path.join(output_dir, f"{outcome.replace('-', '_')}_outcome_stats.csv")
+        summary_df.to_csv(csv_path, index=False)
+        logger.info(f"Decoupled summary stats for outcome '{outcome}' saved to {csv_path}")
+
