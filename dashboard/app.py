@@ -1,0 +1,476 @@
+import os
+import json
+import pandas as pd
+import streamlit as st
+import plotly.express as px
+import streamlit.components.v1 as components
+
+# Configure Streamlit page layout
+st.set_page_config(
+    page_title="Conversation Pattern Miner Dashboard",
+    page_icon="🎯",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Custom styles for high-fidelity aesthetics
+st.markdown("""
+<style>
+    .metric-card {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        border-left: 5px solid #1976d2;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .story-box {
+        background-color: #e3f2fd;
+        border-radius: 8px;
+        padding: 20px;
+        border-left: 5px solid #1e88e5;
+        margin-bottom: 20px;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# -----------------------------------------------------------------------------
+# Data Ingestion Helpers (Cached for performance)
+# -----------------------------------------------------------------------------
+
+@st.cache_data
+def load_features():
+    path = "outputs/features/call_features.csv"
+    if os.path.exists(path):
+        return pd.read_csv(path)
+    return pd.DataFrame()
+
+@st.cache_data
+def load_labels_comparison():
+    path = "outputs/topics/labels_comparison.json"
+    if os.path.exists(path):
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {}
+
+@st.cache_data
+def load_cluster_profiles():
+    path = "outputs/analytics/cluster_outcome_profiles.json"
+    if os.path.exists(path):
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {}
+
+@st.cache_data
+def load_cohens_d():
+    path = "outputs/analytics/cohens_d_analysis.csv"
+    if os.path.exists(path):
+        return pd.read_csv(path)
+    return pd.DataFrame()
+
+@st.cache_data
+def load_dataset_profile():
+    path = "outputs/profiler/dataset_profile.json"
+    if os.path.exists(path):
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {}
+
+@st.cache_data
+def load_raw_summaries():
+    path = "data/processed/labelled_corpus.jsonl"
+    summaries = []
+    if os.path.exists(path):
+        with open(path, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.strip():
+                    summaries.append(json.loads(line))
+    return summaries
+
+# Load active datasets
+features_df = load_features()
+labels_data = load_labels_comparison()
+cluster_profiles = load_cluster_profiles()
+cohens_d_df = load_cohens_d()
+profile_json = load_dataset_profile()
+raw_records = load_raw_summaries()
+
+# Check if data exists
+if features_df.empty:
+    st.error("No pipeline outputs found. Please run: `python run_pipeline.py --config configs/insurance.yaml --phase 3` first.")
+    st.stop()
+
+# -----------------------------------------------------------------------------
+# Sidebar Navigation & Story Outline
+# -----------------------------------------------------------------------------
+
+st.sidebar.title("🎯 Pattern Miner")
+st.sidebar.markdown("*A Domain-Independent Conversation Analytics Framework*")
+st.sidebar.markdown("---")
+
+navigation = st.sidebar.radio(
+    "Navigate Stages:",
+    [
+        "📖 1. The Analytics Narrative",
+        "🗣️ 2. Dialogue Dynamics & Topics",
+        "🎯 3. Semantic Call Profiles",
+        "🔍 4. Detailed Cluster Analytics"
+    ]
+)
+
+st.sidebar.markdown("---")
+st.sidebar.info(
+    "**Active Domain:** Insurance Renewal\n\n"
+    "**Dataset Size:** 384 Conversations\n\n"
+    "**Model Backend:** SentenceTransformers & BERTopic"
+)
+
+# -----------------------------------------------------------------------------
+# Section 1: The Analytics Narrative (Home)
+# -----------------------------------------------------------------------------
+
+if navigation == "📖 1. The Analytics Narrative":
+    st.title("📖 The Conversational Analytics Narrative")
+    st.markdown("### How calls flow from Initial Ingestion to Conversion, Churn, or Deferral")
+    
+    # Story-based introduction box
+    st.markdown("""
+    <div class="story-box">
+        <h4>The Narrative Journey</h4>
+        <p>This dashboard tells a story of <b>384 insurance renewal conversations</b>. By analyzing dialogue structures, 
+        interrogative styles, tenures, premiums, and objections, we discover <b>why renewal calls succeed or fail</b>.</p>
+        <p>Our journey follows a modular pipeline:</p>
+        <ol>
+            <li><b>Phase 1: Ingestion & Validation:</b> Structuring the raw summaries and verifying data type bounds.</li>
+            <li><b>Phase 2: Core NLP:</b> Transforming text summaries into dense vector semantics and engineering 16 styles features.</li>
+            <li><b>Phase 3: Clustering & Correlations:</b> Grouping calls into 6 semantic profiles and computing outcome predictors.</li>
+        </ol>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Top KPI Metrics Cards
+    st.markdown("### Framework Global Demographics")
+    kpi_col1, kpi_col2, kpi_col3, kpi_col4 = st.columns(4)
+    
+    total_calls = len(features_df)
+    won_calls = len(features_df[features_df["outcome"] == "won"])
+    win_rate = won_calls / total_calls if total_calls > 0 else 0.0
+    avg_duration = features_df["call_duration_seconds"].mean() / 60.0
+    avg_sentiment = features_df["customer_sentiment"].mean()
+    
+    with kpi_col1:
+        st.markdown(f"""
+        <div class="metric-card">
+            <h5 style='color: #757575; margin:0;'>TOTAL CALLS</h5>
+            <h2 style='margin: 5px 0 0 0; color: #1976d2;'>{total_calls}</h2>
+            <small style='color: #9e9e9e;'>Validated & Cleaned</small>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    with kpi_col2:
+        st.markdown(f"""
+        <div class="metric-card">
+            <h5 style='color: #757575; margin:0;'>GLOBAL WIN RATE</h5>
+            <h2 style='margin: 5px 0 0 0; color: #2e7d32;'>{win_rate:.2%}</h2>
+            <small style='color: #9e9e9e;'>{won_calls} Successful Renewals</small>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    with kpi_col3:
+        st.markdown(f"""
+        <div class="metric-card">
+            <h5 style='color: #757575; margin:0;'>AVG DURATION</h5>
+            <h2 style='margin: 5px 0 0 0; color: #f57c00;'>{avg_duration:.2f} min</h2>
+            <small style='color: #9e9e9e;'>Talktime per call</small>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    with kpi_col4:
+        st.markdown(f"""
+        <div class="metric-card">
+            <h5 style='color: #757575; margin:0;'>AVG SENTIMENT</h5>
+            <h2 style='margin: 5px 0 0 0; color: #0288d1;'>{avg_sentiment:.2f}</h2>
+            <small style='color: #9e9e9e;'>Customer Tone (-1 to 1)</small>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    st.markdown("---")
+    
+    # Global splits & correlations
+    col_vis1, col_vis2 = st.columns(2)
+    
+    with col_vis1:
+        st.subheader("Outcome Frequency Distribution")
+        outcome_counts = features_df["outcome"].value_counts().reset_index()
+        outcome_counts.columns = ["Outcome", "Count"]
+        fig_out = px.bar(
+            outcome_counts, 
+            x="Outcome", 
+            y="Count", 
+            color="Outcome",
+            color_discrete_map={'won': '#81C784', 'lost': '#E57373', 'no-decision': '#FFB74D'},
+            text_auto=True
+        )
+        fig_out.update_layout(template="plotly_white")
+        st.plotly_chart(fig_out, use_container_width=True)
+        
+    with col_vis2:
+        st.subheader("Statistical Success vs Churn Signals (Cohen's d)")
+        st.markdown("Features with positive values predict *Won* outcomes; negative values predict *Lost* outcomes.")
+        if not cohens_d_df.empty:
+            # Sort by effect size
+            d_sorted = cohens_d_df.sort_values(by="cohens_d")
+            fig_d = px.bar(
+                d_sorted,
+                x="cohens_d",
+                y="feature",
+                orientation="h",
+                color="cohens_d",
+                color_continuous_scale=px.colors.diverging.RdYlGn,
+                labels={"cohens_d": "Cohen's d Effect Size", "feature": "Conversational Metric"}
+            )
+            fig_d.update_layout(template="plotly_white", coloraxis_showscale=False)
+            st.plotly_chart(fig_d, use_container_width=True)
+        else:
+            st.warning("Cohen's d stats not found.")
+
+# -----------------------------------------------------------------------------
+# Section 2: Dialogue Dynamics & Topics
+# -----------------------------------------------------------------------------
+
+elif navigation == "🗣️ 2. Dialogue Dynamics & Topics":
+    st.title("🗣️ Dialogue Dynamics & Topic Modeling")
+    st.markdown("### Deep dive into engineered stylometry metrics and unsupervised topic categorization")
+    
+    st.markdown("""
+    <div class="story-box">
+        <h4>Conversational Feature Extraction & Text Parsing</h4>
+        <p>By parsing individual dialogue turns, the cleaner isolates questions, turn lengths, and monologues. 
+        Select a feature below to view its distribution split by call outcomes.</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Feature distribution selector
+    all_features = [
+        ("talk_ratio", "Agent Talk Ratio"),
+        ("num_turns", "Turn Counts"),
+        ("call_duration_seconds", "Call Duration (Seconds)"),
+        ("customer_sentiment", "Customer Sentiment"),
+        ("num_objections", "Customer Objections Count"),
+        ("max_monologue_turns", "Maximum Monologue Turns"),
+        ("avg_turn_length", "Average Turn Character Length"),
+        ("discount_offered_pct", "Discount Offered Percentage")
+    ]
+    
+    feat_display_names = [f[1] for f in all_features]
+    feat_selected_name = st.selectbox("Select Conversational Feature to Inspect:", feat_display_names)
+    feat_col_name = [f[0] for f in all_features if f[1] == feat_selected_name][0]
+    
+    fig_feat = px.box(
+        features_df,
+        x="outcome",
+        y=feat_col_name,
+        color="outcome",
+        color_discrete_map={'won': '#81C784', 'lost': '#E57373', 'no-decision': '#FFB74D'},
+        points="all",
+        title=f"Distribution of {feat_selected_name} grouped by Call Outcome"
+    )
+    fig_feat.update_layout(template="plotly_white")
+    st.plotly_chart(fig_feat, use_container_width=True)
+    
+    st.markdown("---")
+    
+    # Topic modeling comparative map
+    st.subheader("Discovered Topic Clusters (BERTopic)")
+    st.markdown("Compare strict rule-based **NLP Heuristics** against generative **LLM Segment Names**.")
+    
+    topics_dict = labels_data.get("topics", {})
+    if topics_dict:
+        # Build DataFrame
+        topic_rows = []
+        for t_id, data in topics_dict.items():
+            topic_rows.append({
+                "Topic ID": t_id,
+                "LLM Segment Name": data.get("llm_label"),
+                "NLP Heuristics Label": data.get("heuristic_label"),
+                "Total Calls": data.get("total_calls"),
+                "Win Rate": f"{data.get('win_rate'):.2%}",
+                "Top Keywords": ", ".join(data.get("keywords", []))
+            })
+        topic_df = pd.DataFrame(topic_rows)
+        st.dataframe(topic_df, use_container_width=True, hide_index=True)
+        
+        # Interactive transcript explorer by topic
+        st.markdown("#### Interactive Transcript Explorer by Topic")
+        selected_topic_id = st.selectbox("Select Topic to inspect sample conversation summaries:", topic_df["Topic ID"].tolist())
+        
+        # Filter raw summaries matching the topic
+        if raw_records:
+            # We need to map transcripts by topic
+            # Note: topic assignments can be matched via records index or by matching summaries
+            # Since topic assignments are in outputs/topics/topic_assignments.json, let's load it
+            t_path = "outputs/topics/topic_assignments.json"
+            if os.path.exists(t_path):
+                with open(t_path, "r", encoding="utf-8") as f:
+                    t_assign_data = json.load(f)
+                assignments = t_assign_data.get("topic_assignments", [])
+                
+                matching_summaries = []
+                for idx, record in enumerate(raw_records):
+                    if idx < len(assignments) and str(assignments[idx]) == str(selected_topic_id):
+                        matching_summaries.append(record)
+                        
+                st.write(f"Showing {min(5, len(matching_summaries))} representative summaries for Topic {selected_topic_id}:")
+                for i, r in enumerate(matching_summaries[:5]):
+                    st.markdown(f"**Call ID: `{r.get('call_id')}` | Outcome: `{r.get('outcome')}`**")
+                    st.text_area(f"Summary Transcript Sample {i+1}", r.get("transcript_summary"), height=100)
+    else:
+        st.warning("No Topic labeling data found.")
+
+# -----------------------------------------------------------------------------
+# Section 3: Semantic Call Profiles (UMAP)
+# -----------------------------------------------------------------------------
+
+elif navigation == "🎯 3. Semantic Call Profiles":
+    st.title("🎯 Semantic Call Profiles & Mapping")
+    st.markdown("### Interactive 2D projection of call semantics grouped into 6 clusters")
+    
+    st.markdown("""
+    <div class="story-box">
+        <h4>Manifold Projection & Clustering</h4>
+        <p>Using UMAP (Uniform Manifold Approximation and Projection) and KMeans clustering, 
+        calls are mapped in a 2D semantic space. Hover over points to view their call metrics, 
+        and select outcome filters to inspect cluster win rates.</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Embed the Plotly HTML UMAP plot
+    umap_html_path = "outputs/visualizations/umap_plot.html"
+    if os.path.exists(umap_html_path):
+        with open(umap_html_path, "r", encoding="utf-8") as f:
+            html_data = f.read()
+        components.html(html_data, height=600, scrolling=True)
+    else:
+        st.warning("UMAP HTML map not found. Please run the pipeline to generate it.")
+        
+    st.markdown("---")
+    
+    # KMeans clusters description table
+    st.subheader("Call Clusters Mapping (KMeans)")
+    
+    clusters_dict = labels_data.get("clusters", {})
+    if clusters_dict:
+        cluster_rows = []
+        for c_id, data in clusters_dict.items():
+            cluster_rows.append({
+                "Cluster ID": c_id,
+                "LLM Profile Segment": data.get("llm_label"),
+                "Heuristics Categorization": data.get("heuristic_label"),
+                "Total Calls": data.get("total_calls"),
+                "Win Rate": f"{data.get('win_rate'):.2%}",
+                "Keywords": ", ".join(data.get("keywords", []))
+            })
+        cluster_df = pd.DataFrame(cluster_rows)
+        st.dataframe(cluster_df, use_container_width=True, hide_index=True)
+    else:
+        st.warning("No Cluster labeling comparison data found.")
+
+# -----------------------------------------------------------------------------
+# Section 4: Detailed Cluster Analytics
+# -----------------------------------------------------------------------------
+
+elif navigation == "🔍 4. Detailed Cluster Analytics":
+    st.title("🔍 Detailed Cluster & Outcome Stage Analytics")
+    st.markdown("### Deep dive into metric distributions split separately by outcome stage inside each cluster")
+    
+    # Sidebar selection for active cluster
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("Select Active Segment:")
+    cluster_options = list(range(6))
+    active_cluster = st.sidebar.selectbox("KMeans Cluster:", cluster_options)
+    
+    c_str = f"cluster_{active_cluster}"
+    
+    st.markdown(f"""
+    <div class="story-box">
+        <h4>Cluster {active_cluster} Deep Profile</h4>
+        <p>Review the outcome characteristics inside Cluster {active_cluster}. 
+        The visual subplots compare distributions, while the tabular tabs display metrics split 
+        separately by outcome stages (Won, Lost, and No-Decision).</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Visual Boxplot image
+    plot_path = f"outputs/visualizations/cluster_{active_cluster}_profile.png"
+    
+    col_plot, col_stats = st.columns([1.1, 0.9])
+    
+    with col_plot:
+        st.subheader("Dialogue Metric splits")
+        if os.path.exists(plot_path):
+            st.image(plot_path, use_container_width=True)
+        else:
+            st.warning(f"Profile subplot image not found for Cluster {active_cluster}.")
+            
+    with col_stats:
+        st.subheader("Separated Outcome Stage Stats")
+        
+        if c_str in cluster_profiles:
+            c_data = cluster_profiles[c_str]
+            
+            # Setup Tabs for Won, Lost, and No-Decision
+            tab_won, tab_lost, tab_nodecision = st.tabs(["🏆 Won Calls Stage", "❌ Lost Calls Stage", "⏳ No-Decision Stage"])
+            
+            with tab_won:
+                won_data = c_data.get("won", {})
+                st.markdown(f"**Total Won Calls in Cluster:** `{won_data.get('total_calls', 0)}`")
+                metrics = won_data.get("metrics", {})
+                if metrics:
+                    metrics_df = pd.DataFrame(metrics).T
+                    st.dataframe(metrics_df, use_container_width=True)
+                else:
+                    st.write("No Won calls inside this cluster.")
+                    
+            with tab_lost:
+                lost_data = c_data.get("lost", {})
+                st.markdown(f"**Total Lost Calls in Cluster:** `{lost_data.get('total_calls', 0)}`")
+                metrics = lost_data.get("metrics", {})
+                if metrics:
+                    metrics_df = pd.DataFrame(metrics).T
+                    st.dataframe(metrics_df, use_container_width=True)
+                else:
+                    st.write("No Lost calls inside this cluster.")
+                    
+            with tab_nodecision:
+                nd_data = c_data.get("no-decision", {})
+                st.markdown(f"**Total No-Decision Calls in Cluster:** `{nd_data.get('total_calls', 0)}`")
+                metrics = nd_data.get("metrics", {})
+                if metrics:
+                    metrics_df = pd.DataFrame(metrics).T
+                    st.dataframe(metrics_df, use_container_width=True)
+                else:
+                    st.write("No No-Decision calls inside this cluster.")
+        else:
+            st.warning("No detailed profiling stats found for this cluster.")
+            
+    st.markdown("---")
+    
+    # Global Outcome Summary splits comparison
+    st.subheader("Global Outcome Stage Summaries (Across All Clusters)")
+    st.markdown("Select a global outcome profile to review mean and range metrics:")
+    
+    summary_tab1, summary_tab2, summary_tab3 = st.tabs(["🏆 Global Won Stats", "❌ Global Lost Stats", "⏳ Global No-Decision Stats"])
+    
+    with summary_tab1:
+        csv_path = "outputs/analytics/won_outcome_stats.csv"
+        if os.path.exists(csv_path):
+            st.dataframe(pd.read_csv(csv_path), use_container_width=True, hide_index=True)
+            
+    with summary_tab2:
+        csv_path = "outputs/analytics/lost_outcome_stats.csv"
+        if os.path.exists(csv_path):
+            st.dataframe(pd.read_csv(csv_path), use_container_width=True, hide_index=True)
+            
+    with summary_tab3:
+        csv_path = "outputs/analytics/no_decision_outcome_stats.csv"
+        if os.path.exists(csv_path):
+            st.dataframe(pd.read_csv(csv_path), use_container_width=True, hide_index=True)
