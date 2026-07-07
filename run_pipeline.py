@@ -229,7 +229,37 @@ def main():
             logger.error(f"Error generating visual plots: {e}")
             return
             
+        # 4. Dual-Method Segment Labeling
+        from src.topics.labeler import generate_and_save_labels
+        labels_output_path = "outputs/topics/labels_comparison.json"
+        
+        # Load topic definitions
+        topic_definitions = {}
+        if os.path.exists(topics_json_path):
+            try:
+                with open(topics_json_path, "r", encoding="utf-8") as f:
+                    t_data = json.load(f)
+                topic_definitions = t_data.get("topic_definitions", {})
+            except Exception as e:
+                logger.warning(f"Could not load topic definitions from {topics_json_path}: {e}")
+                
+        try:
+            generate_and_save_labels(
+                valid_records,
+                embeddings,
+                features_df,
+                topics,
+                list(clusters),
+                topic_definitions,
+                labels_output_path
+            )
+            logger.info(f"Segment labeling complete. Comparison matrix saved to {labels_output_path}")
+        except Exception as e:
+            logger.error(f"Error executing segment labeling: {e}")
+            return
+            
         logger.info("Phase 3 execution finished successfully.")
+
 
 if __name__ == "__main__":
     main()
