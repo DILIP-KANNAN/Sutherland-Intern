@@ -16,19 +16,42 @@ st.set_page_config(
 # Custom styles for high-fidelity aesthetics
 st.markdown("""
 <style>
+    /* Metric Card styling: dynamic secondary background with subtle contrast borders */
     .metric-card {
-        background-color: #f8f9fa;
+        background-color: var(--background-secondary-color, #f8f9fa);
+        color: var(--text-color, #1f2937);
         border-radius: 8px;
         padding: 15px;
         border-left: 5px solid #1976d2;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        border-top: 1px solid rgba(128,128,128,0.2);
+        border-right: 1px solid rgba(128,128,128,0.2);
+        border-bottom: 1px solid rgba(128,128,128,0.2);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
+    /* Story Box styling: soft tint layout */
     .story-box {
-        background-color: #e3f2fd;
+        background-color: var(--background-secondary-color, #e3f2fd);
+        color: var(--text-color, #1f2937);
         border-radius: 8px;
         padding: 20px;
         border-left: 5px solid #1e88e5;
+        border-top: 1px solid rgba(128,128,128,0.2);
+        border-right: 1px solid rgba(128,128,128,0.2);
+        border-bottom: 1px solid rgba(128,128,128,0.2);
         margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    /* Bold, highlighted navigation widget in sidebar */
+    div[data-testid="stSidebar"] div.row-widget.stRadio > div {
+        background-color: var(--background-secondary-color, #f0f2f6);
+        border-radius: 8px;
+        padding: 10px;
+        border: 1px solid #1976d2;
+    }
+    div[data-testid="stSidebar"] div.row-widget.stRadio label {
+        font-size: 15px !important;
+        font-weight: 600 !important;
+        padding: 4px 0px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -103,13 +126,10 @@ if features_df.empty:
     st.stop()
 
 # -----------------------------------------------------------------------------
-# Sidebar Navigation & Story Outline
+# Sidebar Navigation (Placed at the top of the sidebar and styled)
 # -----------------------------------------------------------------------------
 
-st.sidebar.title("🎯 Pattern Miner")
-st.sidebar.markdown("*A Domain-Independent Conversation Analytics Framework*")
-st.sidebar.markdown("---")
-
+st.sidebar.markdown("<h3 style='color: #1976d2; margin-top:0px; margin-bottom: 0px;'>🧭 Navigate Stages:</h3>", unsafe_allow_html=True)
 navigation = st.sidebar.radio(
     "Navigate Stages:",
     [
@@ -117,9 +137,13 @@ navigation = st.sidebar.radio(
         "🗣️ 2. Dialogue Dynamics & Topics",
         "🎯 3. Semantic Call Profiles",
         "🔍 4. Detailed Cluster Analytics"
-    ]
+    ],
+    label_visibility="collapsed"
 )
 
+st.sidebar.markdown("---")
+st.sidebar.title("🎯 Pattern Miner")
+st.sidebar.markdown("*A Domain-Independent Conversation Analytics Framework*")
 st.sidebar.markdown("---")
 st.sidebar.info(
     "**Active Domain:** Insurance Renewal\n\n"
@@ -375,10 +399,13 @@ elif navigation == "🔍 4. Detailed Cluster Analytics":
     st.title("🔍 Detailed Cluster & Outcome Stage Analytics")
     st.markdown("### Deep dive into metric distributions split separately by outcome stage inside each cluster")
     
-    st.sidebar.markdown("---")
-    st.sidebar.subheader("Select Active Segment:")
+    # Active cluster selector placed directly on the main body of the page
     cluster_options = list(range(6))
-    active_cluster = st.sidebar.selectbox("KMeans Cluster:", cluster_options)
+    active_cluster = st.selectbox(
+        "Select KMeans Call Cluster Profile to Analyze:",
+        options=cluster_options,
+        format_func=lambda x: f"Cluster {x} — {labels_data.get('clusters', {}).get(str(x), {}).get('llm_label', 'Unnamed Segment')}"
+    )
     
     c_str = f"cluster_{active_cluster}"
     
