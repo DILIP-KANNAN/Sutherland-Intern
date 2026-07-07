@@ -16,6 +16,11 @@ st.set_page_config(
 # Custom styles for high-fidelity aesthetics
 st.markdown("""
 <style>
+    /* Hide Streamlit header (deploy button), footer, and default menu */
+    header {visibility: hidden; height: 0px !important;}
+    footer {visibility: hidden;}
+    #MainMenu {visibility: hidden;}
+
     /* Metric Card styling: dynamic secondary background with subtle contrast borders */
     .metric-card {
         background-color: var(--background-secondary-color, #f8f9fa);
