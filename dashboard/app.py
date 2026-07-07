@@ -33,20 +33,23 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# Find the project root (parent directory of the dashboard folder)
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 # -----------------------------------------------------------------------------
 # Data Ingestion Helpers (Cached for performance)
 # -----------------------------------------------------------------------------
 
 @st.cache_data
 def load_features():
-    path = "outputs/features/call_features.csv"
+    path = os.path.join(PROJECT_ROOT, "outputs/features/call_features.csv")
     if os.path.exists(path):
         return pd.read_csv(path)
     return pd.DataFrame()
 
 @st.cache_data
 def load_labels_comparison():
-    path = "outputs/topics/labels_comparison.json"
+    path = os.path.join(PROJECT_ROOT, "outputs/topics/labels_comparison.json")
     if os.path.exists(path):
         with open(path, "r", encoding="utf-8") as f:
             return json.load(f)
@@ -54,7 +57,7 @@ def load_labels_comparison():
 
 @st.cache_data
 def load_cluster_profiles():
-    path = "outputs/analytics/cluster_outcome_profiles.json"
+    path = os.path.join(PROJECT_ROOT, "outputs/analytics/cluster_outcome_profiles.json")
     if os.path.exists(path):
         with open(path, "r", encoding="utf-8") as f:
             return json.load(f)
@@ -62,14 +65,14 @@ def load_cluster_profiles():
 
 @st.cache_data
 def load_cohens_d():
-    path = "outputs/analytics/cohens_d_analysis.csv"
+    path = os.path.join(PROJECT_ROOT, "outputs/analytics/cohens_d_analysis.csv")
     if os.path.exists(path):
         return pd.read_csv(path)
     return pd.DataFrame()
 
 @st.cache_data
 def load_dataset_profile():
-    path = "outputs/profiler/dataset_profile.json"
+    path = os.path.join(PROJECT_ROOT, "outputs/profiler/dataset_profile.json")
     if os.path.exists(path):
         with open(path, "r", encoding="utf-8") as f:
             return json.load(f)
@@ -77,7 +80,7 @@ def load_dataset_profile():
 
 @st.cache_data
 def load_raw_summaries():
-    path = "data/processed/labelled_corpus.jsonl"
+    path = os.path.join(PROJECT_ROOT, "data/processed/labelled_corpus.jsonl")
     summaries = []
     if os.path.exists(path):
         with open(path, "r", encoding="utf-8") as f:
@@ -216,8 +219,7 @@ if navigation == "📖 1. The Analytics Narrative":
     with col_vis2:
         st.subheader("Statistical Success vs Churn Signals (Cohen's d)")
         st.markdown("Features with positive values predict *Won* outcomes; negative values predict *Lost* outcomes.")
-        if not cohens_d_df.empty:
-            # Sort by effect size
+        if not col_vis2 or not cohens_d_df.empty:
             d_sorted = cohens_d_df.sort_values(by="cohens_d")
             fig_d = px.bar(
                 d_sorted,
@@ -279,13 +281,11 @@ elif navigation == "🗣️ 2. Dialogue Dynamics & Topics":
     
     st.markdown("---")
     
-    # Topic modeling comparative map
     st.subheader("Discovered Topic Clusters (BERTopic)")
     st.markdown("Compare strict rule-based **NLP Heuristics** against generative **LLM Segment Names**.")
     
     topics_dict = labels_data.get("topics", {})
     if topics_dict:
-        # Build DataFrame
         topic_rows = []
         for t_id, data in topics_dict.items():
             topic_rows.append({
@@ -299,16 +299,11 @@ elif navigation == "🗣️ 2. Dialogue Dynamics & Topics":
         topic_df = pd.DataFrame(topic_rows)
         st.dataframe(topic_df, use_container_width=True, hide_index=True)
         
-        # Interactive transcript explorer by topic
         st.markdown("#### Interactive Transcript Explorer by Topic")
         selected_topic_id = st.selectbox("Select Topic to inspect sample conversation summaries:", topic_df["Topic ID"].tolist())
         
-        # Filter raw summaries matching the topic
         if raw_records:
-            # We need to map transcripts by topic
-            # Note: topic assignments can be matched via records index or by matching summaries
-            # Since topic assignments are in outputs/topics/topic_assignments.json, let's load it
-            t_path = "outputs/topics/topic_assignments.json"
+            t_path = os.path.join(PROJECT_ROOT, "outputs/topics/topic_assignments.json")
             if os.path.exists(t_path):
                 with open(t_path, "r", encoding="utf-8") as f:
                     t_assign_data = json.load(f)
@@ -343,8 +338,7 @@ elif navigation == "🎯 3. Semantic Call Profiles":
     </div>
     """, unsafe_allow_html=True)
     
-    # Embed the Plotly HTML UMAP plot
-    umap_html_path = "outputs/visualizations/umap_plot.html"
+    umap_html_path = os.path.join(PROJECT_ROOT, "outputs/visualizations/umap_plot.html")
     if os.path.exists(umap_html_path):
         with open(umap_html_path, "r", encoding="utf-8") as f:
             html_data = f.read()
@@ -354,7 +348,6 @@ elif navigation == "🎯 3. Semantic Call Profiles":
         
     st.markdown("---")
     
-    # KMeans clusters description table
     st.subheader("Call Clusters Mapping (KMeans)")
     
     clusters_dict = labels_data.get("clusters", {})
@@ -382,7 +375,6 @@ elif navigation == "🔍 4. Detailed Cluster Analytics":
     st.title("🔍 Detailed Cluster & Outcome Stage Analytics")
     st.markdown("### Deep dive into metric distributions split separately by outcome stage inside each cluster")
     
-    # Sidebar selection for active cluster
     st.sidebar.markdown("---")
     st.sidebar.subheader("Select Active Segment:")
     cluster_options = list(range(6))
@@ -399,8 +391,7 @@ elif navigation == "🔍 4. Detailed Cluster Analytics":
     </div>
     """, unsafe_allow_html=True)
     
-    # Visual Boxplot image
-    plot_path = f"outputs/visualizations/cluster_{active_cluster}_profile.png"
+    plot_path = os.path.join(PROJECT_ROOT, f"outputs/visualizations/cluster_{active_cluster}_profile.png")
     
     col_plot, col_stats = st.columns([1.1, 0.9])
     
@@ -417,7 +408,6 @@ elif navigation == "🔍 4. Detailed Cluster Analytics":
         if c_str in cluster_profiles:
             c_data = cluster_profiles[c_str]
             
-            # Setup Tabs for Won, Lost, and No-Decision
             tab_won, tab_lost, tab_nodecision = st.tabs(["🏆 Won Calls Stage", "❌ Lost Calls Stage", "⏳ No-Decision Stage"])
             
             with tab_won:
@@ -454,23 +444,22 @@ elif navigation == "🔍 4. Detailed Cluster Analytics":
             
     st.markdown("---")
     
-    # Global Outcome Summary splits comparison
     st.subheader("Global Outcome Stage Summaries (Across All Clusters)")
     st.markdown("Select a global outcome profile to review mean and range metrics:")
     
     summary_tab1, summary_tab2, summary_tab3 = st.tabs(["🏆 Global Won Stats", "❌ Global Lost Stats", "⏳ Global No-Decision Stats"])
     
     with summary_tab1:
-        csv_path = "outputs/analytics/won_outcome_stats.csv"
+        csv_path = os.path.join(PROJECT_ROOT, "outputs/analytics/won_outcome_stats.csv")
         if os.path.exists(csv_path):
             st.dataframe(pd.read_csv(csv_path), use_container_width=True, hide_index=True)
             
     with summary_tab2:
-        csv_path = "outputs/analytics/lost_outcome_stats.csv"
+        csv_path = os.path.join(PROJECT_ROOT, "outputs/analytics/lost_outcome_stats.csv")
         if os.path.exists(csv_path):
             st.dataframe(pd.read_csv(csv_path), use_container_width=True, hide_index=True)
             
     with summary_tab3:
-        csv_path = "outputs/analytics/no_decision_outcome_stats.csv"
+        csv_path = os.path.join(PROJECT_ROOT, "outputs/analytics/no_decision_outcome_stats.csv")
         if os.path.exists(csv_path):
             st.dataframe(pd.read_csv(csv_path), use_container_width=True, hide_index=True)
