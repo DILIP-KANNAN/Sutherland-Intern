@@ -112,6 +112,94 @@ def load_raw_summaries():
                     summaries.append(json.loads(line))
     return summaries
 
+def load_env_key():
+    env_path = os.path.join(PROJECT_ROOT, ".env")
+    if os.path.exists(env_path):
+        with open(env_path, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.strip() and not line.startswith("#"):
+                    parts = line.strip().split("=", 1)
+                    if len(parts) == 2 and parts[0].strip() == "GEMINI_API_KEY":
+                        return parts[1].strip().strip('"').strip("'")
+    return os.environ.get("GEMINI_API_KEY")
+
+def get_coaching_patterns(df):
+    patterns = [
+        {
+            "name": "Pattern 1: The Balanced Empathic Close",
+            "rule": "customer_sentiment > 0.65 AND talk_ratio between 40%-60% AND objections <= 1",
+            "filter": (df["customer_sentiment"] > 0.65) & (df["talk_ratio"] >= 0.40) & (df["talk_ratio"] <= 0.60) & (df["num_objections"] <= 1),
+            "coaching": "Active Listening: Keep dialogue balanced. Do not monopolize the conversation. Validate customer concerns immediately before pitching details."
+        },
+        {
+            "name": "Pattern 2: The Value-Added Incentive Recovery",
+            "rule": "discount_offered_pct > 0% AND objections >= 1 AND resolution_score > 0.65",
+            "filter": (df["discount_offered_pct"] > 0.0) & (df["num_objections"] >= 1) & (df["resolution_score"] > 0.65),
+            "coaching": "Strategic Incentive: Use authorized discounts (5% - 10%) as a direct tool when a pricing objection is raised. Pair the discount with a confirmation of resolution."
+        },
+        {
+            "name": "Pattern 3: The Structured Conciseness Close",
+            "rule": "avg_turn_length > 50 AND max_monologue_turns <= 2 AND num_turns between 5 and 12",
+            "filter": (df["avg_turn_length"] > 50.0) & (df["max_monologue_turns"] <= 2) & (df["num_turns"] >= 5) & (df["num_turns"] <= 12),
+            "coaching": "Clear Explanations: Keep explanations brief and structured. Avoid complex jargon or long blocks of talking. Aim to close the call within 5-12 active turns."
+        },
+        {
+            "name": "Pattern 4: The High-Sentiment Resolution Close",
+            "rule": "customer_sentiment > 0.70 AND resolution_score > 0.80",
+            "filter": (df["customer_sentiment"] > 0.70) & (df["resolution_score"] > 0.80),
+            "coaching": "Confirmations: Maintain an upbeat and helpful tone. Once the customer agrees to the renewal, move quickly through the address and payment confirmations."
+        },
+        {
+            "name": "Pattern 5: Immediate Objection Recovery",
+            "rule": "num_objections == 1 AND resolution_score > 0.75 AND talk_ratio between 45%-65%",
+            "filter": (df["num_objections"] == 1) & (df["resolution_score"] > 0.75) & (df["talk_ratio"] >= 0.45) & (df["talk_ratio"] <= 0.65),
+            "coaching": "Instant Objection Handling: When an objection occurs, pivot immediately to a resolving answer (e.g. discount or frequency options) and confirm the customer is satisfied before moving forward."
+        }
+    ]
+    results = []
+    for p in patterns:
+        subset = df[p["filter"]]
+        total = len(subset)
+        win_rate = len(subset[subset["outcome"] == "won"]) / total if total > 0 else 0.0
+        results.append({
+            "name": p["name"],
+            "rule": p["rule"],
+            "total_calls": total,
+            "win_rate": win_rate,
+            "coaching": p["coaching"]
+        })
+    return results
+
+def generate_llm_coaching_summary(patterns_data):
+    api_key = load_env_key()
+    if not api_key:
+        return "⚠️ **GEMINI_API_KEY not found.** Please configure your free-tier key in a local `.env` file at the project root."
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=api_key)
+        context = ""
+        for p in patterns_data:
+            context += f"- {p['name']} ({p['rule']}): {p['total_calls']} matches, {p['win_rate']:.2%} win rate. Coaching: {p['coaching']}\n"
+        prompt = f"""
+        You are an expert sales performance coach and conversational analyst.
+        Review the following 5 conversation patterns and their win rates from our insurance renewal dataset:
+        
+        {context}
+        
+        Based on this data, write an executive coaching summary for call center managers. 
+        Focus on:
+        1. Explaining what behaviors drive 100% win rates (what works).
+        2. Identifying pitfalls that lead to churn (what doesn't work).
+        3. Providing clear instructions on how managers should coach their agents.
+        
+        Keep it concise, actionable, and structured with bold headers. Do not output conversational introductions or generic text.
+        """
+        model = genai.GenerativeModel("models/gemini-2.5-flash")
+        response = model.generate_content(prompt)
+        return response.text
+    except Exception as e:
+        return f"Error communicating with Gemini API: {str(e)}"
+
 # Load active datasets
 features_df = load_features()
 labels_data = load_labels_comparison()
@@ -136,7 +224,8 @@ navigation = st.sidebar.radio(
         "📖 1. The Analytics Narrative",
         "🗣️ 2. Dialogue Dynamics & Topics",
         "🎯 3. Semantic Call Profiles",
-        "🔍 4. Detailed Cluster Analytics"
+        "🔍 4. Detailed Cluster Analytics",
+        "🎓 5. Agent Coaching & Summaries"
     ],
     label_visibility="collapsed"
 )
@@ -490,3 +579,45 @@ elif navigation == "🔍 4. Detailed Cluster Analytics":
         csv_path = os.path.join(PROJECT_ROOT, "outputs/analytics/no_decision_outcome_stats.csv")
         if os.path.exists(csv_path):
             st.dataframe(pd.read_csv(csv_path), use_container_width=True, hide_index=True)
+
+# -----------------------------------------------------------------------------
+# Section 5: Agent Coaching & Summaries
+# -----------------------------------------------------------------------------
+
+elif navigation == "🎓 5. Agent Coaching & Summaries":
+    st.title("🎓 Conversation Coaching & Patterns Summary")
+    st.markdown("### Deterministic dialogue formulas for agent coaching and performance optimization")
+    
+    st.markdown("""
+    <div class="story-box">
+        <h4>Designing High-Performance Call Guidelines</h4>
+        <p>By defining target thresholds for dialogue duration, monologues, customer sentiments, and objections, 
+        we establish rules that predict renewal success without needing a direct LLM evaluation of every call. 
+        Review the 5 conversion patterns below.</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Calculate patterns
+    patterns_data = get_coaching_patterns(features_df)
+    
+    # Display the 5 patterns
+    for p in patterns_data:
+        with st.container():
+            col_rule, col_stat = st.columns([0.7, 0.3])
+            with col_rule:
+                st.markdown(f"#### {p['name']}")
+                st.markdown(f"**Mathematical Formula:** `{p['rule']}`")
+                st.markdown(f"**Agent Coaching Cue:** *{p['coaching']}*")
+            with col_stat:
+                st.metric("Conversion Win Rate", f"{p['win_rate']:.2%}")
+                st.caption(f"Dataset Matches: {p['total_calls']} calls")
+            st.markdown("---")
+            
+    # LLM summary generator section
+    st.subheader("⚡ Executive Coaching Summary (AI Generated)")
+    st.markdown("Generate a custom coaching summary from the Gemini LLM analyzing these patterns.")
+    
+    if st.button("Generate AI Coaching Summary"):
+        with st.spinner("Analyzing patterns via Gemini API..."):
+            summary_text = generate_llm_coaching_summary(patterns_data)
+            st.markdown(summary_text)
