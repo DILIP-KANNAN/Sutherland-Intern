@@ -145,6 +145,93 @@ def main():
             
         logger.info("Phase 2 execution finished successfully.")
 
+    # Phase 3: Clustering & Outcome Analysis
+    if args.phase >= 3:
+        logger.info("--- Executing Phase 3: Clustering & Outcome Analysis ---")
+        
+        import numpy as np
+        import pandas as pd
+        
+        # Load necessary objects if they are not in memory (useful if running with --phase 3 directly)
+        if not valid_records:
+            processed_path = config.get("data", {}).get("processed_path")
+            if not processed_path:
+                logger.error("No processed_path configured in settings.")
+                return
+            logger.info(f"Loading validated corpus from {processed_path}")
+            try:
+                raw_data = load_raw_dataset(processed_path)
+                expected_outcomes = config.get("metadata", {}).get("outcome_labels")
+                valid_records, _ = validate_dataset(raw_data, expected_outcomes)
+            except Exception as e:
+                logger.error(f"Error loading validated corpus: {e}")
+                return
+                
+        embeddings_path = "outputs/embeddings/call_embeddings.npy"
+        if 'embeddings' not in locals() or embeddings is None:
+            if os.path.exists(embeddings_path):
+                logger.info(f"Loading cached embeddings from {embeddings_path}")
+                embeddings = np.load(embeddings_path)
+            else:
+                logger.error(f"Call embeddings not found at {embeddings_path}. Please run Phase 2 first.")
+                return
+                
+        features_path = "outputs/features/call_features.csv"
+        if 'features_df' not in locals() or features_df is None:
+            if os.path.exists(features_path):
+                logger.info(f"Loading features DataFrame from {features_path}")
+                features_df = pd.read_csv(features_path)
+            else:
+                logger.error(f"Conversational features not found at {features_path}. Please run Phase 2 first.")
+                return
+                
+        topics_json_path = "outputs/topics/topic_assignments.json"
+        if 'topics' not in locals() or topics is None:
+            if os.path.exists(topics_json_path):
+                logger.info(f"Loading topic assignments from {topics_json_path}")
+                with open(topics_json_path, "r", encoding="utf-8") as f:
+                    topics_data = json.load(f)
+                topics = topics_data.get("topic_assignments", [])
+            else:
+                logger.error(f"Topic assignments not found at {topics_json_path}. Please run Phase 2 first.")
+                return
+                
+        # 1. KMeans Clustering
+        from src.clustering.clusterer import Clusterer
+        n_clusters = config.get("pipeline", {}).get("clustering", {}).get("n_clusters", 6)
+        cluster_assignments_path = "outputs/clusters/cluster_assignments.json"
+        try:
+            clusterer = Clusterer(n_clusters=n_clusters)
+            clusters = clusterer.fit_predict(embeddings)
+            clusterer.save_assignments(cluster_assignments_path, clusters)
+            logger.info(f"Clustering complete. Assigned {len(clusters)} calls into {n_clusters} clusters.")
+        except Exception as e:
+            logger.error(f"Error executing KMeans clustering: {e}")
+            return
+            
+        # 2. Outcome Analysis
+        from src.analytics.outcome_analysis import perform_outcome_analysis
+        analytics_dir = "outputs/analytics"
+        try:
+            perform_outcome_analysis(features_df, topics, list(clusters), analytics_dir)
+            logger.info(f"Outcome correlation analysis complete. Reports saved in {analytics_dir}")
+        except Exception as e:
+            logger.error(f"Error performing outcome analysis: {e}")
+            return
+            
+        # 3. Visualizations
+        from src.visualization.visualizer import generate_visualizations
+        visualizations_dir = "outputs/visualizations"
+        try:
+            generate_visualizations(embeddings, features_df, list(clusters), visualizations_dir)
+            logger.info(f"Visualization plots generated successfully in {visualizations_dir}")
+        except Exception as e:
+            logger.error(f"Error generating visual plots: {e}")
+            return
+            
+        logger.info("Phase 3 execution finished successfully.")
+
 if __name__ == "__main__":
     main()
+
 

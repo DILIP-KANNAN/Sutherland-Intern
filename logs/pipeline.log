@@ -35,3 +35,79 @@
 {"timestamp": "2026-07-02T11:54:56.720839Z", "level": "INFO", "message": "Topic assignments saved successfully to outputs/topics\\topic_assignments.json", "module": "topic_model", "function": "save_model"}
 {"timestamp": "2026-07-02T11:54:56.721057Z", "level": "INFO", "message": "Topic modeling step complete. Assigned 384 calls to 8 topics.", "module": "run_pipeline", "function": "main"}
 {"timestamp": "2026-07-02T11:54:56.721180Z", "level": "INFO", "message": "Phase 2 execution finished successfully.", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-07T05:36:25.667538Z", "level": "INFO", "message": "Initializing Conversation Pattern Miner pipeline...", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-07T05:36:25.677664Z", "level": "INFO", "message": "Loaded config from configs/insurance.yaml for domain: insurance", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-07T05:36:25.677816Z", "level": "INFO", "message": "--- Executing Phase 1: Ingestion, Validation, and Profiling ---", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-07T05:36:25.677892Z", "level": "INFO", "message": "Loading raw dataset from data/processed/synthetic_calls.json", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-07T05:36:25.704274Z", "level": "INFO", "message": "Loaded 384 raw records.", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-07T05:36:25.709135Z", "level": "INFO", "message": "Dataset validation summary: 384 valid, 0 invalid records.", "module": "validator", "function": "validate_dataset"}
+{"timestamp": "2026-07-07T05:36:25.709266Z", "level": "INFO", "message": "Saving validated dataset to data/processed/labelled_corpus.jsonl", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-07T05:36:25.721606Z", "level": "INFO", "message": "Successfully saved 384 records to data/processed/labelled_corpus.jsonl", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-07T05:36:25.737008Z", "level": "INFO", "message": "Running profile analysis on 384 records...", "module": "profiler", "function": "profile_dataset"}
+{"timestamp": "2026-07-07T05:36:25.745822Z", "level": "INFO", "message": "Saved dataset profile JSON to outputs/profiler\\dataset_profile.json", "module": "profiler", "function": "profile_dataset"}
+{"timestamp": "2026-07-07T05:36:26.659119Z", "level": "INFO", "message": "Saved EDA visualization plots successfully.", "module": "profiler", "function": "profile_dataset"}
+{"timestamp": "2026-07-07T05:36:26.660337Z", "level": "INFO", "message": "Phase 1 completed successfully. Profile generated in outputs/profiler", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-07T05:36:26.660523Z", "level": "INFO", "message": "--- Executing Phase 2: Embeddings, Features, and Topics ---", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-07T05:36:39.515968Z", "level": "INFO", "message": "Loading sentence-transformer model: all-MiniLM-L6-v2", "module": "embedder", "function": "__init__"}
+{"timestamp": "2026-07-07T05:36:45.499858Z", "level": "INFO", "message": "Found cached call embeddings at outputs/embeddings/call_embeddings.npy. Loading...", "module": "embedder", "function": "generate_embeddings"}
+{"timestamp": "2026-07-07T05:36:45.517057Z", "level": "INFO", "message": "Call embeddings step complete. Shape: (384, 384)", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-07T05:36:45.519782Z", "level": "INFO", "message": "Extracting features for 384 calls...", "module": "extractor", "function": "extract_features"}
+{"timestamp": "2026-07-07T05:36:45.545968Z", "level": "INFO", "message": "Saved feature DataFrame of shape (384, 18) to outputs/features/call_features.csv", "module": "extractor", "function": "extract_features"}
+{"timestamp": "2026-07-07T05:36:45.546294Z", "level": "INFO", "message": "Conversational features step complete. Shape: (384, 18)", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-07T05:37:01.276585Z", "level": "INFO", "message": "Initializing BERTopic model with min_topic_size=5, nr_topics=8", "module": "topic_model", "function": "__init__"}
+{"timestamp": "2026-07-07T05:37:01.277152Z", "level": "INFO", "message": "Fitting and transforming call documents through BERTopic pipeline...", "module": "topic_model", "function": "fit_transform"}
+{"timestamp": "2026-07-07T05:37:19.149558Z", "level": "INFO", "message": "Topic assignments saved successfully to outputs/topics\\topic_assignments.json", "module": "topic_model", "function": "save_model"}
+{"timestamp": "2026-07-07T05:37:19.149787Z", "level": "INFO", "message": "Topic modeling step complete. Assigned 384 calls to 8 topics.", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-07T05:37:19.149937Z", "level": "INFO", "message": "Phase 2 execution finished successfully.", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-07T05:37:19.150061Z", "level": "INFO", "message": "--- Executing Phase 3: Clustering & Outcome Analysis ---", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-07T05:37:19.152482Z", "level": "INFO", "message": "Initializing KMeans clusterer with n_clusters=6", "module": "clusterer", "function": "__init__"}
+{"timestamp": "2026-07-07T05:37:19.152671Z", "level": "INFO", "message": "Fitting KMeans on embedding matrix of shape (384, 384)...", "module": "clusterer", "function": "fit_predict"}
+{"timestamp": "2026-07-07T05:37:25.804774Z", "level": "INFO", "message": "Cluster assignments exported successfully to outputs/clusters/cluster_assignments.json", "module": "clusterer", "function": "save_assignments"}
+{"timestamp": "2026-07-07T05:37:25.804978Z", "level": "INFO", "message": "Clustering complete. Assigned 384 calls into 6 clusters.", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-07T05:37:25.929526Z", "level": "INFO", "message": "Statistical reports generated and exported successfully.", "module": "outcome_analysis", "function": "perform_outcome_analysis"}
+{"timestamp": "2026-07-07T05:37:25.930087Z", "level": "INFO", "message": "Outcome correlation analysis complete. Reports saved in outputs/analytics", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-07T05:37:25.951845Z", "level": "INFO", "message": "Reducing call embeddings to 2D UMAP space...", "module": "visualizer", "function": "generate_visualizations"}
+{"timestamp": "2026-07-07T05:37:27.758735Z", "level": "INFO", "message": "Generating interactive UMAP Plotly scatter map...", "module": "visualizer", "function": "generate_visualizations"}
+{"timestamp": "2026-07-07T05:37:28.292080Z", "level": "INFO", "message": "Interactive UMAP map exported successfully to outputs/visualizations\\umap_plot.html", "module": "visualizer", "function": "generate_visualizations"}
+{"timestamp": "2026-07-07T05:37:28.293079Z", "level": "INFO", "message": "Generating static UMAP scatter plot...", "module": "visualizer", "function": "generate_visualizations"}
+{"timestamp": "2026-07-07T05:37:28.662770Z", "level": "INFO", "message": "Generating outcome-split boxplots for features...", "module": "visualizer", "function": "generate_visualizations"}
+{"timestamp": "2026-07-07T05:37:28.674493Z", "level": "ERROR", "message": "Error generating visual plots: boxplot() got an unexpected keyword argument 'labels'. Did you mean 'label'?", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-07T05:38:05.251363Z", "level": "INFO", "message": "Initializing Conversation Pattern Miner pipeline...", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-07T05:38:05.287486Z", "level": "INFO", "message": "Loaded config from configs/insurance.yaml for domain: insurance", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-07T05:38:05.287671Z", "level": "INFO", "message": "--- Executing Phase 1: Ingestion, Validation, and Profiling ---", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-07T05:38:05.287752Z", "level": "INFO", "message": "Loading raw dataset from data/processed/synthetic_calls.json", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-07T05:38:05.314666Z", "level": "INFO", "message": "Loaded 384 raw records.", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-07T05:38:05.320968Z", "level": "INFO", "message": "Dataset validation summary: 384 valid, 0 invalid records.", "module": "validator", "function": "validate_dataset"}
+{"timestamp": "2026-07-07T05:38:05.321101Z", "level": "INFO", "message": "Saving validated dataset to data/processed/labelled_corpus.jsonl", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-07T05:38:05.333702Z", "level": "INFO", "message": "Successfully saved 384 records to data/processed/labelled_corpus.jsonl", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-07T05:38:05.352113Z", "level": "INFO", "message": "Running profile analysis on 384 records...", "module": "profiler", "function": "profile_dataset"}
+{"timestamp": "2026-07-07T05:38:05.362925Z", "level": "INFO", "message": "Saved dataset profile JSON to outputs/profiler\\dataset_profile.json", "module": "profiler", "function": "profile_dataset"}
+{"timestamp": "2026-07-07T05:38:06.315251Z", "level": "INFO", "message": "Saved EDA visualization plots successfully.", "module": "profiler", "function": "profile_dataset"}
+{"timestamp": "2026-07-07T05:38:06.316885Z", "level": "INFO", "message": "Phase 1 completed successfully. Profile generated in outputs/profiler", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-07T05:38:06.317082Z", "level": "INFO", "message": "--- Executing Phase 2: Embeddings, Features, and Topics ---", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-07T05:38:19.541212Z", "level": "INFO", "message": "Loading sentence-transformer model: all-MiniLM-L6-v2", "module": "embedder", "function": "__init__"}
+{"timestamp": "2026-07-07T05:38:25.212861Z", "level": "INFO", "message": "Found cached call embeddings at outputs/embeddings/call_embeddings.npy. Loading...", "module": "embedder", "function": "generate_embeddings"}
+{"timestamp": "2026-07-07T05:38:25.224366Z", "level": "INFO", "message": "Call embeddings step complete. Shape: (384, 384)", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-07T05:38:25.228083Z", "level": "INFO", "message": "Extracting features for 384 calls...", "module": "extractor", "function": "extract_features"}
+{"timestamp": "2026-07-07T05:38:25.252684Z", "level": "INFO", "message": "Saved feature DataFrame of shape (384, 18) to outputs/features/call_features.csv", "module": "extractor", "function": "extract_features"}
+{"timestamp": "2026-07-07T05:38:25.253058Z", "level": "INFO", "message": "Conversational features step complete. Shape: (384, 18)", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-07T05:38:40.927511Z", "level": "INFO", "message": "Initializing BERTopic model with min_topic_size=5, nr_topics=8", "module": "topic_model", "function": "__init__"}
+{"timestamp": "2026-07-07T05:38:40.929698Z", "level": "INFO", "message": "Fitting and transforming call documents through BERTopic pipeline...", "module": "topic_model", "function": "fit_transform"}
+{"timestamp": "2026-07-07T05:38:58.408648Z", "level": "INFO", "message": "Topic assignments saved successfully to outputs/topics\\topic_assignments.json", "module": "topic_model", "function": "save_model"}
+{"timestamp": "2026-07-07T05:38:58.408820Z", "level": "INFO", "message": "Topic modeling step complete. Assigned 384 calls to 8 topics.", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-07T05:38:58.408925Z", "level": "INFO", "message": "Phase 2 execution finished successfully.", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-07T05:38:58.409003Z", "level": "INFO", "message": "--- Executing Phase 3: Clustering & Outcome Analysis ---", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-07T05:38:58.411097Z", "level": "INFO", "message": "Initializing KMeans clusterer with n_clusters=6", "module": "clusterer", "function": "__init__"}
+{"timestamp": "2026-07-07T05:38:58.411306Z", "level": "INFO", "message": "Fitting KMeans on embedding matrix of shape (384, 384)...", "module": "clusterer", "function": "fit_predict"}
+{"timestamp": "2026-07-07T05:39:04.383522Z", "level": "INFO", "message": "Cluster assignments exported successfully to outputs/clusters/cluster_assignments.json", "module": "clusterer", "function": "save_assignments"}
+{"timestamp": "2026-07-07T05:39:04.383694Z", "level": "INFO", "message": "Clustering complete. Assigned 384 calls into 6 clusters.", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-07T05:39:04.487441Z", "level": "INFO", "message": "Statistical reports generated and exported successfully.", "module": "outcome_analysis", "function": "perform_outcome_analysis"}
+{"timestamp": "2026-07-07T05:39:04.487865Z", "level": "INFO", "message": "Outcome correlation analysis complete. Reports saved in outputs/analytics", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-07T05:39:04.494747Z", "level": "INFO", "message": "Reducing call embeddings to 2D UMAP space...", "module": "visualizer", "function": "generate_visualizations"}
+{"timestamp": "2026-07-07T05:39:06.421110Z", "level": "INFO", "message": "Generating interactive UMAP Plotly scatter map...", "module": "visualizer", "function": "generate_visualizations"}
+{"timestamp": "2026-07-07T05:39:06.878492Z", "level": "INFO", "message": "Interactive UMAP map exported successfully to outputs/visualizations\\umap_plot.html", "module": "visualizer", "function": "generate_visualizations"}
+{"timestamp": "2026-07-07T05:39:06.878694Z", "level": "INFO", "message": "Generating static UMAP scatter plot...", "module": "visualizer", "function": "generate_visualizations"}
+{"timestamp": "2026-07-07T05:39:07.320338Z", "level": "INFO", "message": "Generating outcome-split boxplots for features...", "module": "visualizer", "function": "generate_visualizations"}
+{"timestamp": "2026-07-07T05:39:07.954624Z", "level": "INFO", "message": "Successfully exported all visualizations.", "module": "visualizer", "function": "generate_visualizations"}
+{"timestamp": "2026-07-07T05:39:07.955057Z", "level": "INFO", "message": "Visualization plots generated successfully in outputs/visualizations", "module": "run_pipeline", "function": "main"}
+{"timestamp": "2026-07-07T05:39:07.955211Z", "level": "INFO", "message": "Phase 3 execution finished successfully.", "module": "run_pipeline", "function": "main"}
